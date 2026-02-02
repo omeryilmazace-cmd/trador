@@ -11,6 +11,7 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, trades = [] }) => {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<any>(null);
     const seriesRef = useRef<ISeriesApi<'Candlestick'>>(null);
+    const tradeSeriesRef = useRef<ISeriesApi<'Line'>[]>([]);
 
     useEffect(() => {
         if (!chartContainerRef.current) return;
@@ -21,8 +22,8 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, trades = [] }) => {
                 textColor: '#94a3b8',
             },
             grid: {
-                vertLines: { color: '#1e293b' },
-                horzLines: { color: '#1e293b' },
+                vertLines: { color: '#1e293b', style: 1 },
+                horzLines: { color: '#1e293b', style: 1 },
             },
             width: chartContainerRef.current.clientWidth,
             height: 450,
@@ -71,9 +72,37 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, trades = [] }) => {
 
     useEffect(() => {
         if (seriesRef.current && trades.length > 0) {
+            // Clean up old trade series
+            tradeSeriesRef.current.forEach(s => chartRef.current?.removeSeries(s));
+            tradeSeriesRef.current = [];
+
             const markers = trades.flatMap(trade => {
+                const entryTimeSec = (trade.entryTime / 1000) as UTCTimestamp;
+
+                // Add Entry Horizontal Level (Short segment)
+                const entryLine = chartRef.current.addLineSeries({
+                    color: '#3b82f6',
+                    lineWidth: 1,
+                    lineStyle: 2, // Dashed
+                    lineType: 0, // Simple
+                    lastValueVisible: false,
+                    priceLineVisible: false,
+                });
+
+                // Find next sample time for short line
+                const dataIndex = data.findIndex(d => d.timestamp === trade.entryTime);
+                const nextTimeSec = data[dataIndex + 1]
+                    ? (data[dataIndex + 1].timestamp / 1000) as UTCTimestamp
+                    : (trade.entryTime / 1000 + 3600) as UTCTimestamp; // Fallback +1h
+
+                entryLine.setData([
+                    { time: entryTimeSec, value: trade.entryPrice },
+                    { time: nextTimeSec, value: trade.entryPrice }
+                ]);
+                tradeSeriesRef.current.push(entryLine);
+
                 const entryMarker = {
-                    time: (trade.entryTime / 1000) as UTCTimestamp,
+                    time: entryTimeSec,
                     position: 'belowBar' as const,
                     color: '#3b82f6',
                     shape: 'arrowUp' as const,
@@ -81,14 +110,36 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, trades = [] }) => {
                 };
 
                 if (trade.exitTime) {
+                    const exitTimeSec = (trade.exitTime / 1000) as UTCTimestamp;
+
+                    // Add Exit Horizontal Level
+                    const exitLine = chartRef.current.addLineSeries({
+                        color: trade.pnl > 0 ? '#22c55e' : '#ef4444',
+                        lineWidth: 1,
+                        lineStyle: 2, // Dashed
+                        lastValueVisible: false,
+                        priceLineVisible: false,
+                    });
+
+                    const exitDataIndex = data.findIndex(d => d.timestamp === trade.exitTime);
+                    const exitNextTimeSec = data[exitDataIndex + 1]
+                        ? (data[exitDataIndex + 1].timestamp / 1000) as UTCTimestamp
+                        : (trade.exitTime / 1000 + 3600) as UTCTimestamp;
+
+                    exitLine.setData([
+                        { time: exitTimeSec, value: trade.exitPrice! },
+                        { time: exitNextTimeSec, value: trade.exitPrice! }
+                    ]);
+                    tradeSeriesRef.current.push(exitLine);
+
                     return [
                         entryMarker,
                         {
-                            time: (trade.exitTime / 1000) as UTCTimestamp,
+                            time: exitTimeSec,
                             position: 'aboveBar' as const,
                             color: trade.pnl > 0 ? '#22c55e' : '#ef4444',
                             shape: 'arrowDown' as const,
-                            text: `Exit ${trade.pnl > 0 ? '+' : ''}${trade.pnlPct.toFixed(2)}%`,
+                            text: `Ex ${trade.pnl > 0 ? '+' : ''}${trade.pnlPct.toFixed(2)}%`,
                         }
                     ];
                 }
@@ -98,8 +149,10 @@ const CandleChart: React.FC<CandleChartProps> = ({ data, trades = [] }) => {
             seriesRef.current.setMarkers(markers);
         } else if (seriesRef.current) {
             seriesRef.current.setMarkers([]);
+            tradeSeriesRef.current.forEach(s => chartRef.current?.removeSeries(s));
+            tradeSeriesRef.current = [];
         }
-    }, [trades]);
+    }, [trades, data]);
 
     return <div ref={chartContainerRef} className="w-full h-full" />;
 };
