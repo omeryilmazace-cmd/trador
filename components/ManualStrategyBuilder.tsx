@@ -1,9 +1,11 @@
-import React from 'react';
-import { StrategyConfig, StrategyCondition, Timeframe } from '../types';
-import { Plus, Trash2, Sliders, LineChart, Activity, Zap, Shield } from 'lucide-react';
+import React, { useState } from 'react';
+import { StrategyConfig, StrategyCondition, Timeframe, Candle } from '../types';
+import { Plus, Trash2, Sliders, LineChart, Activity, Zap, Shield, Cpu, CheckCircle2, X, Loader2, ArrowRight } from 'lucide-react';
+import { optimizeStrategy, OptimizationResult } from '../services/optimizerEngine';
 
 interface ManualStrategyBuilderProps {
     strategy: StrategyConfig;
+    data: Candle[];
     onChange: (strategy: StrategyConfig) => void;
 }
 
@@ -22,7 +24,34 @@ const OPERATORS = [
     { id: 'crosses_below', label: 'Crosses Below' },
 ];
 
-const ManualStrategyBuilder: React.FC<ManualStrategyBuilderProps> = ({ strategy, onChange }) => {
+const ManualStrategyBuilder: React.FC<ManualStrategyBuilderProps> = ({ strategy, data, onChange }) => {
+    const [isOptimizing, setIsOptimizing] = useState(false);
+    const [optProgress, setOptProgress] = useState(0);
+    const [optResults, setOptResults] = useState<OptimizationResult[] | null>(null);
+
+    const handleRunOptimizer = async () => {
+        if (strategy.entryConditions.length < 1) {
+            alert("Add at least one entry condition to optimize.");
+            return;
+        }
+        setIsOptimizing(true);
+        setOptProgress(0);
+        setOptResults(null);
+
+        try {
+            const results = await optimizeStrategy(strategy, data, (p) => setOptProgress(p));
+            setOptResults(results);
+        } catch (e) {
+            console.error("Optimization failed", e);
+        } finally {
+            setIsOptimizing(false);
+        }
+    };
+
+    const applyOptimization = (newConfig: StrategyConfig) => {
+        onChange(newConfig);
+        setOptResults(null);
+    };
 
     const addCondition = (type: 'entry' | 'exit') => {
         const newCond: StrategyCondition = {
@@ -186,7 +215,7 @@ const ManualStrategyBuilder: React.FC<ManualStrategyBuilderProps> = ({ strategy,
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-700">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-700 relative">
             {/* Strategy Direction */}
             <section className="bg-indigo-950/20 border border-indigo-500/10 p-4 rounded-2xl flex items-center justify-between">
                 <div>
@@ -208,6 +237,70 @@ const ManualStrategyBuilder: React.FC<ManualStrategyBuilderProps> = ({ strategy,
                     </button>
                 </div>
             </section>
+
+            {/* AI Optimizer Access */}
+            <button
+                onClick={handleRunOptimizer}
+                disabled={isOptimizing}
+                className="w-full bg-[#312e81] hover:bg-[#3730a3] border border-indigo-400/30 p-4 rounded-2xl flex items-center justify-between group transition-all"
+            >
+                <div className="flex items-center gap-3">
+                    <div className={`p-2 bg-indigo-500/20 rounded-xl ${isOptimizing ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'}`}>
+                        {isOptimizing ? <Loader2 className="w-5 h-5 text-indigo-300 animate-spin" /> : <Cpu className="w-5 h-5 text-indigo-300" />}
+                    </div>
+                    <div className="text-left">
+                        <div className="text-sm font-black text-white uppercase tracking-tighter">Machine Binary Optimizer</div>
+                        <div className="text-[10px] text-indigo-300/70">Find the ideal combination automatically</div>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    {isOptimizing && <span className="text-[10px] font-mono text-indigo-300">{optProgress.toFixed(0)}%</span>}
+                    <ArrowRight className="w-4 h-4 text-indigo-400 group-hover:translate-x-1 transition-transform" />
+                </div>
+            </button>
+
+            {/* Optimization Results Overlay */}
+            {optResults && (
+                <div className="absolute inset-0 z-50 bg-[#0f1115]/95 backdrop-blur-md rounded-2xl border border-indigo-500/30 p-6 flex flex-col animate-in zoom-in-95 duration-300">
+                    <div className="flex justify-between items-center mb-6">
+                        <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                            <h3 className="text-lg font-bold text-white">Optimization Complete</h3>
+                        </div>
+                        <button onClick={() => setOptResults(null)} className="p-2 hover:bg-gray-800 rounded-full transition-colors">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin">
+                        <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2">Best Variations Found:</div>
+                        {optResults.map((res, i) => (
+                            <div key={i} className="bg-[#1e293b] border border-gray-700/50 p-4 rounded-xl flex flex-col gap-3 group hover:border-indigo-500/40 transition-all">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <div className="text-xs font-bold text-white mb-1">{res.config.name}</div>
+                                        <div className="flex flex-wrap gap-1">
+                                            {res.config.entryConditions.map((c, j) => (
+                                                <span key={j} className="text-[8px] bg-indigo-500/10 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-500/20">{c.indicator}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-sm font-black text-emerald-400">${res.stats.totalPnL.toFixed(0)}</div>
+                                        <div className="text-[10px] text-gray-500">{(res.stats.winRate * 100).toFixed(1)}% WR</div>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => applyOptimization(res.config)}
+                                    className="w-full py-2 bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white text-[10px] font-bold rounded-lg border border-indigo-600/30 transition-all"
+                                >
+                                    APPLY THIS VERSION
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Entry Conditions Section */}
             <section>

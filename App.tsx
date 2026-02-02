@@ -367,7 +367,14 @@ const App: React.FC = () => {
                             </div>
 
                             <div className="col-span-12 lg:col-span-4 h-full border-l border-gray-800 pl-6 lg:block hidden overflow-y-auto">
-                                <StrategyPanel strategy={strategy} backtest={backtest} isGenerating={isGenerating} onUpdateStrategy={handleUpdateStrategy} onSaveStrategy={handleSaveStrategy} />
+                                <StrategyPanel
+                                    strategy={strategy}
+                                    backtest={backtest}
+                                    data={data}
+                                    isGenerating={isGenerating}
+                                    onUpdateStrategy={handleUpdateStrategy}
+                                    onSaveStrategy={handleSaveStrategy}
+                                />
                                 {strategy && backtest && (
                                     <div className="mt-6 space-y-3">
                                         <button onClick={() => setPaperTradingActive(!paperTradingActive)} className={`w-full py-4 font-black text-xs uppercase tracking-widest rounded-xl transition-all border ${paperTradingActive ? 'bg-indigo-900/40 border-indigo-500 text-indigo-200' : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'}`}>

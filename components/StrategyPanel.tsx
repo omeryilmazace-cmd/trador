@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BacktestResult, StrategyConfig } from '../types';
+import { BacktestResult, StrategyConfig, Candle } from '../types';
 import { ShieldCheck, AlertTriangle, Activity, TrendingUp, DollarSign, BrainCircuit, Edit3, Save, Share2, MousePointer2 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import ManualStrategyBuilder from './ManualStrategyBuilder';
@@ -7,6 +7,7 @@ import ManualStrategyBuilder from './ManualStrategyBuilder';
 interface StrategyPanelProps {
     strategy: StrategyConfig | null;
     backtest: BacktestResult | null;
+    data: Candle[];
     isGenerating: boolean;
     onUpdateStrategy: (config: StrategyConfig) => void;
     onSaveStrategy?: (strategy: StrategyConfig) => void;
@@ -197,6 +198,7 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({ strategy, backtest, isGen
                 <div className="bg-[#1e293b] p-6 rounded-2xl border border-indigo-500/20 shadow-2xl shadow-indigo-500/5">
                     <ManualStrategyBuilder
                         strategy={ensureManualStrategy()}
+                        data={data}
                         onChange={onUpdateStrategy}
                     />
                     <button
