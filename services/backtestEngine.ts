@@ -137,8 +137,10 @@ export const runBacktest = (strategy: StrategyConfig, data: Candle[]): BacktestR
       let exitReason = '';
 
       // Stop Loss / Take Profit
-      if (pnlPct <= -strategy.stopLossPct) { shouldExit = true; exitReason = 'SL'; }
-      if (pnlPct >= strategy.takeProfitPct) { shouldExit = true; exitReason = 'TP'; }
+      if (strategy.riskParametersEnabled !== false) {
+        if (pnlPct <= -strategy.stopLossPct) { shouldExit = true; exitReason = 'SL'; }
+        if (pnlPct >= strategy.takeProfitPct) { shouldExit = true; exitReason = 'TP'; }
+      }
 
       // Technical Exit
       if (!shouldExit && strategy.exitConditions.length > 0) {

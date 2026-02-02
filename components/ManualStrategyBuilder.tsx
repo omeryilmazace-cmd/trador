@@ -232,15 +232,27 @@ const ManualStrategyBuilder: React.FC<ManualStrategyBuilderProps> = ({ strategy,
             </section>
 
             {/* Risk Parameters Quick Access */}
-            <section className="bg-indigo-500/5 border border-indigo-500/20 p-5 rounded-3xl relative overflow-hidden group">
+            <section className={`bg-indigo-500/5 border border-indigo-500/20 p-5 rounded-3xl relative overflow-hidden group transition-all duration-500 ${strategy.riskParametersEnabled === false ? 'opacity-60 saturate-50' : ''}`}>
                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                     <Shield className="w-16 h-16 text-indigo-400" />
                 </div>
-                <div className="flex items-center gap-2 mb-4">
-                    <Shield className="w-4 h-4 text-indigo-400" />
-                    <h4 className="text-sm font-bold text-gray-200 tracking-wide">Risk Safeguards</h4>
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <Shield className={`w-4 h-4 ${strategy.riskParametersEnabled === false ? 'text-gray-500' : 'text-indigo-400'}`} />
+                        <h4 className="text-sm font-bold text-gray-200 tracking-wide">Risk Safeguards</h4>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={strategy.riskParametersEnabled !== false}
+                            onChange={(e) => onChange({ ...strategy, riskParametersEnabled: e.target.checked })}
+                            className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <span className="ml-2 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{strategy.riskParametersEnabled === false ? 'OFF' : 'ON'}</span>
+                    </label>
                 </div>
-                <div className="grid grid-cols-2 gap-4 relative z-10">
+                <div className={`grid grid-cols-2 gap-4 relative z-10 transition-all ${strategy.riskParametersEnabled === false ? 'pointer-events-none' : ''}`}>
                     <div className="space-y-1.5">
                         <span className="text-[10px] text-gray-500 font-bold block">STOP LOSS %</span>
                         <div className="flex items-center gap-2">
