@@ -29,7 +29,7 @@ const ManualStrategyBuilder: React.FC<ManualStrategyBuilderProps> = ({ strategy,
     const [optProgress, setOptProgress] = useState(0);
     const [optResults, setOptResults] = useState<OptimizationResult[] | null>(null);
 
-    const handleRunOptimizer = async () => {
+    const handleRunOptimizer = async (lookback?: number) => {
         if (strategy.entryConditions.length < 1) {
             alert("Add at least one entry condition to optimize.");
             return;
@@ -39,7 +39,8 @@ const ManualStrategyBuilder: React.FC<ManualStrategyBuilderProps> = ({ strategy,
         setOptResults(null);
 
         try {
-            const results = await optimizeStrategy(strategy, data, (p) => setOptProgress(p));
+            const configWithLookback = { ...strategy, lookbackCandles: lookback || 0 };
+            const results = await optimizeStrategy(configWithLookback, data, (p) => setOptProgress(p));
             setOptResults(results);
         } catch (e) {
             console.error("Optimization failed", e);
@@ -239,25 +240,44 @@ const ManualStrategyBuilder: React.FC<ManualStrategyBuilderProps> = ({ strategy,
             </section>
 
             {/* AI Optimizer Access */}
-            <button
-                onClick={handleRunOptimizer}
-                disabled={isOptimizing}
-                className="w-full bg-[#312e81] hover:bg-[#3730a3] border border-indigo-400/30 p-4 rounded-2xl flex items-center justify-between group transition-all"
-            >
-                <div className="flex items-center gap-3">
-                    <div className={`p-2 bg-indigo-500/20 rounded-xl ${isOptimizing ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'}`}>
-                        {isOptimizing ? <Loader2 className="w-5 h-5 text-indigo-300 animate-spin" /> : <Cpu className="w-5 h-5 text-indigo-300" />}
+            <div className="space-y-3">
+                <button
+                    onClick={() => handleRunOptimizer()}
+                    disabled={isOptimizing}
+                    className="w-full bg-[#312e81] hover:bg-[#3730a3] border border-indigo-400/30 p-4 rounded-2xl flex items-center justify-between group transition-all"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 bg-indigo-500/20 rounded-xl ${isOptimizing ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'}`}>
+                            {isOptimizing ? <Loader2 className="w-5 h-5 text-indigo-300 animate-spin" /> : <Cpu className="w-5 h-5 text-indigo-300" />}
+                        </div>
+                        <div className="text-left">
+                            <div className="text-sm font-black text-white uppercase tracking-tighter">Machine Binary Optimizer</div>
+                            <div className="text-[10px] text-indigo-300/70">Find the ideal combination (All History)</div>
+                        </div>
                     </div>
-                    <div className="text-left">
-                        <div className="text-sm font-black text-white uppercase tracking-tighter">Machine Binary Optimizer</div>
-                        <div className="text-[10px] text-indigo-300/70">Find the ideal combination automatically</div>
+                    <div className="flex items-center gap-2">
+                        {isOptimizing && !strategy.lookbackCandles && <span className="text-[10px] font-mono text-indigo-300">{optProgress.toFixed(0)}%</span>}
+                        <ArrowRight className="w-4 h-4 text-indigo-400 group-hover:translate-x-1 transition-transform" />
                     </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    {isOptimizing && <span className="text-[10px] font-mono text-indigo-300">{optProgress.toFixed(0)}%</span>}
-                    <ArrowRight className="w-4 h-4 text-indigo-400 group-hover:translate-x-1 transition-transform" />
-                </div>
-            </button>
+                </button>
+
+                <button
+                    onClick={() => handleRunOptimizer(1000)}
+                    disabled={isOptimizing}
+                    className="w-full bg-emerald-900/20 hover:bg-emerald-900/30 border border-emerald-500/20 p-3 rounded-2xl flex items-center justify-between group transition-all"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="p-1.5 bg-emerald-500/10 rounded-lg">
+                            <Activity className="w-4 h-4 text-emerald-400" />
+                        </div>
+                        <div className="text-left">
+                            <div className="text-xs font-bold text-emerald-100 uppercase tracking-tighter">Stress Test: Last 1000 Candles</div>
+                            <div className="text-[9px] text-emerald-400/60">Verify if strategy works in recent market conditions</div>
+                        </div>
+                    </div>
+                    <ArrowRight className="w-3.5 h-3.5 text-emerald-500 group-hover:translate-x-1 transition-transform" />
+                </button>
+            </div>
 
             {/* Optimization Results Overlay */}
             {optResults && (

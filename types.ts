@@ -42,6 +42,7 @@ export interface StrategyConfig {
   riskParametersEnabled?: boolean; // Toggle for TP/SL
   side: 'LONG' | 'SHORT'; // Strategy direction
   logicExplanation: string; // AI generated explanation
+  lookbackCandles?: number; // Last N candles to test
 }
 
 export interface Trade {
