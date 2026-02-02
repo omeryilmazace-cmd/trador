@@ -57,8 +57,11 @@ export interface Trade {
 
 export interface BacktestResult {
   totalTrades: number;
+  winTrades: number;
+  lossTrades: number;
   winRate: number;
   totalPnL: number;
+  profitFactor: number;
   maxDrawdown: number;
   sharpeRatio: number;
   equityCurve: { timestamp: number; equity: number }[];

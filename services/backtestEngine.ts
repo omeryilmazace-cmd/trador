@@ -199,7 +199,12 @@ export const runBacktest = (strategy: StrategyConfig, data: Candle[]): BacktestR
 
   // Calculate Stats
   const winningTrades = trades.filter(t => t.pnl > 0);
+  const losingTrades = trades.filter(t => t.pnl <= 0);
   const winRate = trades.length > 0 ? winningTrades.length / trades.length : 0;
+
+  const grossProfit = winningTrades.reduce((a, b) => a + b.pnl, 0);
+  const grossLoss = Math.abs(losingTrades.reduce((a, b) => a + b.pnl, 0));
+  const profitFactor = grossLoss === 0 ? (grossProfit > 0 ? 99 : 0) : grossProfit / grossLoss;
 
   // Sharpe Ratio (Simplified annual)
   const returns = equityCurve.map((e, i) => i === 0 ? 0 : (e.equity - equityCurve[i - 1].equity) / equityCurve[i - 1].equity);
@@ -213,8 +218,11 @@ export const runBacktest = (strategy: StrategyConfig, data: Candle[]): BacktestR
 
   return {
     totalTrades: trades.length,
+    winTrades: winningTrades.length,
+    lossTrades: losingTrades.length,
     winRate,
     totalPnL: equity - INITIAL_CAPITAL,
+    profitFactor,
     maxDrawdown,
     sharpeRatio,
     equityCurve,

@@ -287,7 +287,7 @@ const ManualStrategyBuilder: React.FC<ManualStrategyBuilderProps> = ({ strategy,
                                     </div>
                                     <div className="text-right">
                                         <div className="text-sm font-black text-emerald-400">${res.stats.totalPnL.toFixed(0)}</div>
-                                        <div className="text-[10px] text-gray-500">{(res.stats.winRate * 100).toFixed(1)}% WR</div>
+                                        <div className="text-[10px] text-gray-500">{res.stats.totalTrades} trades / {(res.stats.winRate * 100).toFixed(1)}% WR</div>
                                     </div>
                                 </div>
                                 <button

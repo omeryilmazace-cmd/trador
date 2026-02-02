@@ -56,7 +56,7 @@ const LiveInput = ({
     );
 };
 
-const StrategyPanel: React.FC<StrategyPanelProps> = ({ strategy, backtest, isGenerating, onUpdateStrategy, onSaveStrategy }) => {
+const StrategyPanel: React.FC<StrategyPanelProps> = ({ strategy, backtest, data, isGenerating, onUpdateStrategy, onSaveStrategy }) => {
     const [isManualMode, setIsManualMode] = useState(false);
 
     const handleParamChange = (field: keyof StrategyConfig, value: number) => {
@@ -213,7 +213,7 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({ strategy, backtest, isGen
 
             {/* Backtest Results */}
             {backtest && (
-                <div className="space-y-4">
+                <div className="space-y-4 pb-10">
                     <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Backtest Performance</h4>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -224,24 +224,30 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({ strategy, backtest, isGen
                             <div className={`text-2xl font-bold ${backtest.winRate > 0.5 ? 'text-green-400' : 'text-yellow-400'}`}>
                                 {(backtest.winRate * 100).toFixed(1)}%
                             </div>
+                            <div className="text-[10px] text-gray-500 mt-1">
+                                <span className="text-emerald-400">{backtest.winTrades} wins</span> / <span className="text-red-400">{backtest.lossTrades} losses</span>
+                            </div>
                         </div>
                         <div className="bg-[#1e293b] p-4 rounded-xl border border-gray-700">
                             <div className="flex items-center gap-2 text-gray-400 text-xs mb-1">
-                                <DollarSign className="w-3 h-3" /> Total PnL
+                                <DollarSign className="w-3 h-3" /> Total Profit
                             </div>
                             <div className={`text-2xl font-bold ${backtest.totalPnL > 0 ? 'text-green-400' : 'text-red-400'}`}>
                                 ${backtest.totalPnL.toFixed(2)}
                             </div>
+                            <div className="text-[10px] text-gray-500 mt-1">
+                                {backtest.totalTrades} Total Trades
+                            </div>
                         </div>
                         <div className="bg-[#1e293b] p-4 rounded-xl border border-gray-700">
                             <div className="flex items-center gap-2 text-gray-400 text-xs mb-1">
-                                <Activity className="w-3 h-3" /> Sharpe
+                                <ShieldCheck className="w-3 h-3" /> Profit Factor
                             </div>
                             <div className="text-2xl font-bold text-white">
-                                {backtest.sharpeRatio.toFixed(2)}
+                                {backtest.profitFactor.toFixed(2)}
                             </div>
                         </div>
-                        <div className="bg-[#1e293b] p-4 rounded-xl border border-gray-700">
+                        <div className="bg-[#1e293b] p-4 rounded-xl border border-gray-700 text-right">
                             <div className="flex items-center gap-2 text-gray-400 text-xs mb-1">
                                 <AlertTriangle className="w-3 h-3" /> Max DD
                             </div>
