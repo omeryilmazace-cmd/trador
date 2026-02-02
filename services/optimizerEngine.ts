@@ -15,90 +15,60 @@ export const optimizeStrategy = async (
     if (!data || data.length < 50) return [];
 
     const results: OptimizationResult[] = [];
-    const entryConds = baseConfig.entryConditions;
 
-    // 1. Define Parameter Grids
+    // Deep clone helper
+    const deepClone = (obj: any) => JSON.parse(JSON.stringify(obj));
+
+    // Define Parameter Grids
     const slRanges = [0.01, 0.02, 0.03];
-    const tpRanges = [0.04, 0.06, 0.08];
+    const tpRanges = [0.03, 0.05, 0.08];
 
-    const firstCond = entryConds[0];
-    const paramVariations: number[] = [];
-    const valueVariations: number[] = [];
-    const operatorVariations: string[] = [];
+    const paramVariations = [7, 14, 21, 28];
+    const valueVariations = [25, 30, 35, 70, 75, 80];
 
-    if (firstCond) {
-        if (firstCond.indicator === 'RSI') {
-            paramVariations.push(7, 14, 21);
-            valueVariations.push(30, 70); // oversold vs overbought
-            operatorVariations.push('<', '>');
-        } else if (firstCond.indicator === 'EMA_CROSS' || firstCond.indicator === 'SMA_CROSS') {
-            paramVariations.push(9, 12, 20);
-            valueVariations.push(0);
-            operatorVariations.push('crosses_above', 'crosses_below');
-        } else if (firstCond.indicator === 'BOLLINGER') {
-            paramVariations.push(20, 26);
-            valueVariations.push(0);
-            operatorVariations.push('<', '>');
-        } else {
-            paramVariations.push(0);
-            valueVariations.push(firstCond.value);
-            operatorVariations.push(firstCond.operator);
-        }
-    } else {
-        paramVariations.push(0);
-        valueVariations.push(0);
-        operatorVariations.push('');
-    }
+    // Testing variations across both entry and exit if they exist
+    const totalIterations = 50;
 
-    const totalIterations = slRanges.length * tpRanges.length * paramVariations.length * valueVariations.length * operatorVariations.length;
-    let currentIteration = 0;
+    for (let i = 0; i < totalIterations; i++) {
+        const variation = deepClone(baseConfig);
 
-    for (const sl of slRanges) {
-        for (const tp of tpRanges) {
-            for (const param of paramVariations) {
-                for (const val of valueVariations) {
-                    for (const oper of operatorVariations) {
-                        const newEntryConds = [...entryConds];
-                        if (firstCond) {
-                            const newFirst = {
-                                ...firstCond,
-                                operator: oper as any,
-                                value: val,
-                                params: { ...firstCond.params }
-                            };
-                            if (newFirst.indicator === 'RSI') newFirst.params.period = param;
-                            if (newFirst.indicator === 'EMA_CROSS' || newFirst.indicator === 'SMA_CROSS') newFirst.params.fast = param;
-                            if (newFirst.indicator === 'BOLLINGER') newFirst.params.period = param;
-                            newEntryConds[0] = newFirst;
-                        }
+        variation.stopLossPct = slRanges[Math.floor(Math.random() * slRanges.length)];
+        variation.takeProfitPct = tpRanges[Math.floor(Math.random() * tpRanges.length)];
 
-                        const variation: StrategyConfig = {
-                            ...baseConfig,
-                            entryConditions: newEntryConds,
-                            stopLossPct: sl,
-                            takeProfitPct: tp,
-                            name: `Opt: ${oper} ${val}${param !== 0 ? ` (P:${param})` : ''}`
-                        };
-
-                        const stats = runBacktest(variation, data);
-                        const tradeBias = Math.min(stats.totalTrades / 5, 1);
-                        const score = ((stats.totalPnL * (stats.winRate + 0.1)) / (stats.maxDrawdown + 0.02)) * tradeBias;
-
-                        results.push({ config: variation, stats, score });
-
-                        currentIteration++;
-                        if (currentIteration % 20 === 0) {
-                            onProgress?.((currentIteration / totalIterations) * 100);
-                            await new Promise(r => setTimeout(r, 0));
-                        }
-                    }
-                }
+        if (variation.entryConditions[0]) {
+            const cond = variation.entryConditions[0];
+            cond.params.period = paramVariations[Math.floor(Math.random() * paramVariations.length)];
+            cond.value = valueVariations[Math.floor(Math.random() * valueVariations.length)];
+            if (cond.indicator === 'RSI') {
+                cond.operator = Math.random() > 0.5 ? '<' : '>';
             }
+        }
+
+        if (variation.exitConditions[0]) {
+            const cond = variation.exitConditions[0];
+            cond.params.period = paramVariations[Math.floor(Math.random() * paramVariations.length)];
+            cond.value = valueVariations[Math.floor(Math.random() * valueVariations.length)];
+            if (cond.indicator === 'RSI') {
+                cond.operator = Math.random() > 0.5 ? '<' : '>';
+            }
+        }
+
+        variation.name = `Optimized #${i + 1}`;
+        const stats = runBacktest(variation, data);
+
+        const tradeBias = Math.min(stats.totalTrades / 5, 1);
+        const score = ((stats.totalPnL * (stats.winRate + 0.1)) / (stats.maxDrawdown + 0.02)) * tradeBias;
+
+        results.push({ config: variation, stats, score });
+
+        if (i % 5 === 0) {
+            onProgress?.((i / totalIterations) * 100);
+            await new Promise(r => setTimeout(r, 0));
         }
     }
 
     return results
-        .filter(r => r.stats.totalTrades > 1)
+        .filter(r => r.stats.totalTrades > 2)
         .sort((a, b) => b.score - a.score)
         .slice(0, 5);
 };
