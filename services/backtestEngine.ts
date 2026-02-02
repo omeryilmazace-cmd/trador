@@ -28,16 +28,28 @@ const calculateRSI = (data: Candle[], period: number, index: number): number | n
   return 100 - (100 / (1 + rs));
 };
 
+// Helper for Exponential Moving Average
+const calculateEMA = (data: Candle[], period: number, index: number, prevEma?: number | null): number | null => {
+  if (index < period - 1) return null;
+  const k = 2 / (period + 1);
+  if (index === period - 1) {
+    return calculateSMA(data, period, index);
+  }
+  const prev = prevEma || calculateEMA(data, period, index - 1);
+  if (prev === null) return null;
+  return data[index].close * k + prev * (1 - k);
+};
+
 const checkCondition = (cond: StrategyCondition, candle: Candle, data: Candle[], index: number): boolean => {
   const currentPrice = candle.close;
-  
+
   if (cond.indicator === 'RSI') {
     const rsi = calculateRSI(data, cond.params.period || 14, index);
     if (rsi === null) return false;
     if (cond.operator === '<') return rsi < cond.value;
     if (cond.operator === '>') return rsi > cond.value;
   }
-  
+
   if (cond.indicator === 'SMA_CROSS') {
     const smaFast = calculateSMA(data, cond.params.fast || 9, index);
     const smaSlow = calculateSMA(data, cond.params.slow || 21, index);
@@ -50,13 +62,50 @@ const checkCondition = (cond: StrategyCondition, candle: Candle, data: Candle[],
     if (cond.operator === 'crosses_below') return prevSmaFast > prevSmaSlow && smaFast < smaSlow;
   }
 
+  if (cond.indicator === 'EMA_CROSS') {
+    const emaFast = calculateEMA(data, cond.params.fast || 12, index);
+    const emaSlow = calculateEMA(data, cond.params.slow || 26, index);
+    const prevEmaFast = calculateEMA(data, cond.params.fast || 12, index - 1);
+    const prevEmaSlow = calculateEMA(data, cond.params.slow || 26, index - 1);
+
+    if (!emaFast || !emaSlow || !prevEmaFast || !prevEmaSlow) return false;
+
+    if (cond.operator === 'crosses_above') return prevEmaFast < prevEmaSlow && emaFast > emaSlow;
+    if (cond.operator === 'crosses_below') return prevEmaFast > prevEmaSlow && emaFast < emaSlow;
+  }
+
+  if (cond.indicator === 'MACD') {
+    const emaFast = calculateEMA(data, cond.params.fast || 12, index);
+    const emaSlow = calculateEMA(data, cond.params.slow || 26, index);
+    if (!emaFast || !emaSlow) return false;
+    const macd = emaFast - emaSlow;
+    if (cond.operator === '>') return macd > cond.value;
+    if (cond.operator === '<') return macd < cond.value;
+  }
+
+  if (cond.indicator === 'BOLLINGER') {
+    const period = cond.params.period || 20;
+    const stdDevMultiplier = cond.params.stdDev || 2;
+    const sma = calculateSMA(data, period, index);
+    if (!sma) return false;
+
+    let sumSq = 0;
+    for (let i = 0; i < period; i++) {
+      sumSq += Math.pow(data[index - i].close - sma, 2);
+    }
+    const stdDev = Math.sqrt(sumSq / period);
+    const upper = sma + stdDevMultiplier * stdDev;
+    const lower = sma - stdDevMultiplier * stdDev;
+
+    if (cond.operator === '<') return currentPrice < lower;
+    if (cond.operator === '>') return currentPrice > upper;
+  }
+
   if (cond.indicator === 'PRICE_LEVEL') {
-     // A simplified version, usually this checks dynamic levels like Bollinger bands
-     // For this MVP, we assume it means "Price vs a value" (unlikely) or Price vs SMA
-     const sma = calculateSMA(data, cond.params.period || 20, index);
-     if(!sma) return false;
-     if (cond.operator === '>') return currentPrice > sma;
-     if (cond.operator === '<') return currentPrice < sma;
+    const sma = calculateSMA(data, cond.params.period || 20, index);
+    if (!sma) return false;
+    if (cond.operator === '>') return currentPrice > sma;
+    if (cond.operator === '<') return currentPrice < sma;
   }
 
   return false;
@@ -67,7 +116,7 @@ export const runBacktest = (strategy: StrategyConfig, data: Candle[]): BacktestR
   const trades: Trade[] = [];
   const equityCurve = [{ timestamp: data[0].timestamp, equity }];
   let openTrade: Trade | null = null;
-  
+
   // Risk Management
   const warnings: string[] = [];
   let maxEquity = equity;
@@ -80,7 +129,7 @@ export const runBacktest = (strategy: StrategyConfig, data: Candle[]): BacktestR
     if (openTrade) {
       const priceChangePct = (candle.close - openTrade.entryPrice) / openTrade.entryPrice;
       const pnlPct = openTrade.type === OrderType.BUY ? priceChangePct : -priceChangePct;
-      
+
       let shouldExit = false;
       let exitReason = '';
 
@@ -98,7 +147,7 @@ export const runBacktest = (strategy: StrategyConfig, data: Candle[]): BacktestR
       if (shouldExit) {
         const exitPrice = candle.close;
         // Fees: 0.05% taker fee simulation
-        const fee = (openTrade.entryPrice * 0.0005) + (exitPrice * 0.0005); 
+        const fee = (openTrade.entryPrice * 0.0005) + (exitPrice * 0.0005);
         const rawPnl = (exitPrice - openTrade.entryPrice) * (openTrade.type === OrderType.BUY ? 1 : -1) * (equity / openTrade.entryPrice); // Full equity compounding
         const realPnl = rawPnl - fee;
 
@@ -115,19 +164,19 @@ export const runBacktest = (strategy: StrategyConfig, data: Candle[]): BacktestR
 
     // Check Entries (only if no open trade)
     if (!openTrade) {
-        // AND logic for entries: All conditions must be met
-        const signal = strategy.entryConditions.every(cond => checkCondition(cond, candle, data, i));
-        
-        if (signal) {
-          openTrade = {
-            entryTime: candle.timestamp,
-            entryPrice: candle.close,
-            type: OrderType.BUY, // Defaulting to Longs for MVP simplicity
-            pnl: 0,
-            pnlPct: 0,
-            status: 'OPEN'
-          };
-        }
+      // AND logic for entries: All conditions must be met
+      const signal = strategy.entryConditions.every(cond => checkCondition(cond, candle, data, i));
+
+      if (signal) {
+        openTrade = {
+          entryTime: candle.timestamp,
+          entryPrice: candle.close,
+          type: OrderType.BUY, // Defaulting to Longs for MVP simplicity
+          pnl: 0,
+          pnlPct: 0,
+          status: 'OPEN'
+        };
+      }
     }
 
     // Update Max Drawdown tracking
@@ -141,9 +190,9 @@ export const runBacktest = (strategy: StrategyConfig, data: Candle[]): BacktestR
   // Calculate Stats
   const winningTrades = trades.filter(t => t.pnl > 0);
   const winRate = trades.length > 0 ? winningTrades.length / trades.length : 0;
-  
+
   // Sharpe Ratio (Simplified annual)
-  const returns = equityCurve.map((e, i) => i === 0 ? 0 : (e.equity - equityCurve[i-1].equity) / equityCurve[i-1].equity);
+  const returns = equityCurve.map((e, i) => i === 0 ? 0 : (e.equity - equityCurve[i - 1].equity) / equityCurve[i - 1].equity);
   const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
   const stdDev = Math.sqrt(returns.map(x => Math.pow(x - avgReturn, 2)).reduce((a, b) => a + b, 0) / returns.length);
   const sharpeRatio = stdDev === 0 ? 0 : (avgReturn / stdDev) * Math.sqrt(24 * 365); // Annualized for hourly data
