@@ -213,10 +213,10 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({ strategy, backtest, data,
 
             {/* Backtest Results */}
             {backtest && (
-                <div className="space-y-4 pb-10">
+                <div className="space-y-4 pb-20">
                     <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Backtest Performance</h4>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="bg-[#1e293b] p-4 rounded-xl border border-gray-700">
                             <div className="flex items-center gap-2 text-gray-400 text-xs mb-1">
                                 <TrendingUp className="w-3 h-3" /> Win Rate
@@ -247,7 +247,7 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({ strategy, backtest, data,
                                 {backtest.profitFactor.toFixed(2)}
                             </div>
                         </div>
-                        <div className="bg-[#1e293b] p-4 rounded-xl border border-gray-700 text-right">
+                        <div className="bg-[#1e293b] p-4 rounded-xl border border-gray-700">
                             <div className="flex items-center gap-2 text-gray-400 text-xs mb-1">
                                 <AlertTriangle className="w-3 h-3" /> Max DD
                             </div>

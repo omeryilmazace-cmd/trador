@@ -13,7 +13,7 @@ interface ChartAreaProps {
 
 const ChartArea: React.FC<ChartAreaProps> = ({ data, trades = [], strategy, symbol, timeframe }) => {
   return (
-    <div className="bg-[#1e293b] rounded-xl border border-gray-700 shadow-xl overflow-hidden flex flex-col h-[550px]">
+    <div className="bg-[#1e293b] rounded-xl border border-gray-700 shadow-xl overflow-hidden flex flex-col h-[400px] lg:h-[550px]">
       <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-[#0f1115]">
         <div className="flex items-center gap-3">
           <div className="bg-indigo-500/10 p-2 rounded-lg border border-indigo-500/20">

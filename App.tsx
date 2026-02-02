@@ -188,8 +188,8 @@ const App: React.FC = () => {
                 <DeployModal isOpen={showDeployModal} strategy={strategy} onClose={() => setShowDeployModal(false)} onDeploy={handleRealDeploy} />
             )}
 
-            {/* Sidebar */}
-            <aside className="w-16 lg:w-64 border-r border-gray-800 flex flex-col items-center lg:items-stretch py-6 flex-shrink-0 bg-[#0f1115] z-20">
+            {/* Sidebar - Mobile Responsive */}
+            <aside className="fixed inset-y-0 left-0 w-16 lg:static lg:w-64 border-r border-gray-800 flex flex-col items-center lg:items-stretch py-6 flex-shrink-0 bg-[#0f1115] z-30 transition-all">
                 <div className="mb-8 px-4 flex items-center gap-3 justify-center lg:justify-start">
                     <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
                         <BrainCircuit className="text-white w-5 h-5" />
@@ -241,15 +241,15 @@ const App: React.FC = () => {
             {/* Main Content */}
             <main className="flex-1 flex flex-col h-screen overflow-hidden">
 
-                {/* Header */}
-                <header className="h-16 border-b border-gray-800 flex items-center justify-between px-8 bg-[#0f1115]/95 backdrop-blur z-10">
-                    <div className="flex items-center gap-4">
-                        <div className="relative">
+                {/* Header - Mobile Responsive */}
+                <header className="h-auto min-h-[4rem] border-b border-gray-800 flex flex-col lg:flex-row items-center justify-between gap-4 px-4 lg:px-8 py-4 bg-[#0f1115]/95 backdrop-blur z-20">
+                    <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                        <div className="relative flex-1 lg:flex-none">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                             <input
                                 value={symbol}
                                 onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                                className="bg-gray-900 border border-gray-800 rounded-lg pl-9 pr-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500 w-40"
+                                className="bg-gray-900 border border-gray-800 rounded-lg pl-9 pr-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500 w-full lg:w-40"
                             />
                         </div>
                         <select
@@ -265,14 +265,14 @@ const App: React.FC = () => {
                         {loadingData && <RefreshCcw className="w-4 h-4 text-indigo-500 animate-spin" />}
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-900/20 px-3 py-1.5 rounded-full border border-emerald-900/50 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                    <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                        <div className="flex items-center gap-2 text-[10px] lg:text-xs text-emerald-400 bg-emerald-900/20 px-3 py-1.5 rounded-full border border-emerald-900/50 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            AI Analysis Engine Active
+                            AI Active
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-400 bg-gray-900 px-3 py-1.5 rounded-full border border-gray-800">
-                            <Cpu className="w-4 h-4 text-indigo-500" />
-                            Market Socket Local
+                        <div className="flex items-center gap-2 text-[10px] lg:text-sm text-gray-400 bg-gray-900 px-3 py-1.5 rounded-full border border-gray-800">
+                            <Cpu className="w-3.5 h-3.5 lg:w-4 h-4 text-indigo-500" />
+                            Socket Local
                         </div>
                     </div>
                 </header>
@@ -280,8 +280,8 @@ const App: React.FC = () => {
                 {/* Content Grid */}
                 <div className="flex-1 overflow-hidden p-6">
                     {activeTab === 'SAVED' ? (
-                        <div className="h-full overflow-y-auto">
-                            <h2 className="text-2xl font-bold mb-6">Saved Strategies</h2>
+                        <div className="h-full overflow-y-auto pb-20">
+                            <h2 className="text-xl lg:text-2xl font-bold mb-6">Saved Strategies</h2>
                             {savedStrategies.length === 0 ? (
                                 <div className="text-center py-20 text-gray-500 bg-[#1e293b] rounded-xl border border-gray-700">
                                     <Save className="w-12 h-12 mx-auto mb-4 opacity-20" />
@@ -309,55 +309,49 @@ const App: React.FC = () => {
                             )}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-12 gap-6 h-full">
-                            <div className="col-span-12 lg:col-span-8 flex flex-col gap-6 h-full overflow-y-auto pb-20 scrollbar-hide">
+                        <div className="grid grid-cols-12 gap-6 h-full overflow-y-auto pb-40">
+                            <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
                                 <ChartArea data={data} trades={backtest?.trades || []} strategy={strategy} symbol={symbol} timeframe={timeframe} />
 
-                                <div className="bg-[#1e293b] rounded-xl border border-gray-700 p-6 shadow-xl relative overflow-hidden">
+                                <div className="bg-[#1e293b] rounded-xl border border-gray-700 p-4 lg:p-6 shadow-xl relative overflow-hidden">
                                     <div className="absolute top-0 right-0 p-8 opacity-5">
                                         <BrainCircuit className="w-32 h-32" />
                                     </div>
                                     <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-white font-bold flex items-center gap-2">
+                                        <h3 className="text-white font-bold text-sm flex items-center gap-2">
                                             <Activity className="w-4 h-4 text-indigo-400" />
                                             Deep Analysis Generation
                                         </h3>
-                                        <span className="text-[10px] text-gray-500 bg-gray-800 px-2 py-1 rounded">MULTI-STRATEGY MODE</span>
+                                        <span className="text-[10px] text-gray-500 bg-gray-800 px-2 py-1 rounded">MULTI-STRATEGY</span>
                                     </div>
                                     <div className="flex flex-col gap-6">
                                         <div className="flex flex-col gap-2">
                                             <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest flex items-center gap-1">
-                                                <Library className="w-3 h-3" /> Quick Template Library
+                                                <Library className="w-3 h-3" /> Templates
                                             </label>
                                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                                                 {PRESET_STRATEGIES.map((preset, idx) => (
-                                                    <button key={idx} onClick={() => handleLoadPreset(preset)} className="text-left p-3 rounded-xl border border-gray-700/50 bg-[#0f1115] hover:bg-gray-800 hover:border-indigo-500 transition-all group">
-                                                        <div className="font-bold text-[11px] text-gray-300 group-hover:text-white truncate">{preset.name}</div>
-                                                        <div className="text-[9px] text-gray-600 group-hover:text-gray-400 mt-1 uppercase tracking-tighter">{preset.timeframe} Focus</div>
+                                                    <button key={idx} onClick={() => handleLoadPreset(preset)} className="text-left p-2.5 rounded-xl border border-gray-700/50 bg-[#0f1115] hover:bg-gray-800 hover:border-indigo-500 transition-all group">
+                                                        <div className="font-bold text-[10px] lg:text-[11px] text-gray-300 group-hover:text-white truncate">{preset.name}</div>
+                                                        <div className="text-[8px] lg:text-[9px] text-gray-600 group-hover:text-gray-400 mt-1 uppercase tracking-tighter">{preset.timeframe}</div>
                                                     </button>
                                                 ))}
                                             </div>
                                         </div>
-                                        <div className="flex gap-4">
+                                        <div className="flex flex-col lg:flex-row gap-4">
                                             <textarea
                                                 value={userPrompt}
                                                 onChange={(e) => setUserPrompt(e.target.value)}
                                                 placeholder="Describe your strategy. Example: 'Look for EMA 20 crossing 50 on short term trends with RSI confirmation.'"
                                                 className="flex-1 bg-[#0f1115] border border-gray-800 rounded-xl p-4 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none h-28 text-gray-300 placeholder-gray-600"
                                             />
-                                            <div className="flex flex-col gap-2 w-44">
-                                                <button onClick={() => { setStrategy(null); setBacktest(null); setUserPrompt(''); setAlternatives([]); }} className="w-full py-2.5 text-xs font-bold text-gray-500 hover:text-white border border-gray-800 rounded-xl hover:bg-gray-800 transition-all">Clear Canvas</button>
-                                                <button onClick={handleGenerateStrategy} disabled={isGenerating} className="flex-1 bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:opacity-90 disabled:opacity-30 relative group shadow-xl shadow-indigo-900/20">
+                                            <div className="flex flex-row lg:flex-col gap-2 w-full lg:w-44">
+                                                <button onClick={() => { setStrategy(null); setBacktest(null); setUserPrompt(''); setAlternatives([]); }} className="flex-1 py-2.5 text-xs font-bold text-gray-500 hover:text-white border border-gray-800 rounded-xl hover:bg-gray-800 transition-all">Clear</button>
+                                                <button onClick={handleGenerateStrategy} disabled={isGenerating} className="flex-[2] bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:opacity-90 disabled:opacity-30 relative group shadow-xl">
                                                     {isGenerating ? (
-                                                        <div className="flex flex-col items-center">
-                                                            <RefreshCcw className="w-5 h-5 animate-spin mb-1" />
-                                                            <span className="text-[8px]">Crafting Strategies</span>
-                                                        </div>
+                                                        <span className="flex items-center justify-center gap-2"><Loader className="w-4 h-4 animate-spin" /> Crafting</span>
                                                     ) : (
-                                                        <div className="flex flex-col items-center gap-1">
-                                                            <BrainCircuit className="w-5 h-5" />
-                                                            <span>Generate</span>
-                                                        </div>
+                                                        <span className="flex items-center justify-center gap-2"><BrainCircuit className="w-4 h-4" /> Generate</span>
                                                     )}
                                                 </button>
                                             </div>
@@ -366,7 +360,7 @@ const App: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="col-span-12 lg:col-span-4 h-full border-l border-gray-800 pl-6 lg:block hidden overflow-y-auto">
+                            <div className="col-span-12 lg:col-span-4 h-full border-t lg:border-t-0 lg:border-l border-gray-800 pt-8 lg:pt-0 lg:pl-6 overflow-y-visible">
                                 <StrategyPanel
                                     strategy={strategy}
                                     backtest={backtest}
