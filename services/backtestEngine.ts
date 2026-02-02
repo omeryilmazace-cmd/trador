@@ -28,16 +28,19 @@ const calculateRSI = (data: Candle[], period: number, index: number): number | n
   return 100 - (100 / (1 + rs));
 };
 
-// Helper for Exponential Moving Average
-const calculateEMA = (data: Candle[], period: number, index: number, prevEma?: number | null): number | null => {
+const calculateEMA = (data: Candle[], period: number, index: number): number | null => {
   if (index < period - 1) return null;
   const k = 2 / (period + 1);
-  if (index === period - 1) {
-    return calculateSMA(data, period, index);
+
+  // To avoid O(N^2) or stack overflow, we should ideally pre-calculate this
+  // But for the current structure, let's at least make it iterative
+  let ema = calculateSMA(data, period, period - 1);
+  if (ema === null) return null;
+
+  for (let i = period; i <= index; i++) {
+    ema = data[i].close * k + ema * (1 - k);
   }
-  const prev = prevEma || calculateEMA(data, period, index - 1);
-  if (prev === null) return null;
-  return data[index].close * k + prev * (1 - k);
+  return ema;
 };
 
 const checkCondition = (cond: StrategyCondition, candle: Candle, data: Candle[], index: number): boolean => {

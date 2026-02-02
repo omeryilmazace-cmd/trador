@@ -45,14 +45,30 @@ export default async function handler(req, res) {
 
     const openai = new OpenAI({ apiKey, baseURL: baseUrl });
 
-    const SYSTEM_PROMPT = `Sen deneyimli bir Kantitatif Strateji Analistisin. 
-Kullanıcının verdiği notlara ve piyasa verilerine (son 50 mum) dayanarak en az 3 farklı trade stratejisi üretmelisin. 
+    const SYSTEM_PROMPT = `You are a Quantitative Strategy Analyst.
+Generate at least 3 distinct trading strategies based on user notes and market data.
 
-Kurallar:
-1. EMA_CROSS, SMA_CROSS, RSI, MACD ve BOLLINGER indikatörlerini kullanabilirsin.
-2. EMA_CROSS ve SMA_CROSS için 'crosses_above' veya 'crosses_below' operatörlerini kullan.
-3. Yanıtın MUTLAKA şu JSON formatında olmalı: { "strategies": [ { "name": "...", "description": "...", "timeframe": "1h", "entryConditions": [...], "exitConditions": [...], "stopLossPct": 0.02, "takeProfitPct": 0.04, "riskPerTradePct": 0.01, "logicExplanation": "..." } ] }
-4. SADECE JSON döndür, başka açıklama yazma.`;
+RULES:
+1. Use indicators: EMA_CROSS, SMA_CROSS, RSI, MACD, BOLLINGER.
+2. For crosses, use operators 'crosses_above' or 'crosses_below'.
+3. For levels, use '>' or '<'.
+4. STRICT JSON FORMAT:
+{
+  "strategies": [
+    {
+      "name": "Strategy Name",
+      "description": "Short desc",
+      "timeframe": "1h",
+      "entryConditions": [{"indicator": "RSI", "operator": "<", "value": 30, "params": {"period": 14}}],
+      "exitConditions": [{"indicator": "RSI", "operator": ">", "value": 70, "params": {"period": 14}}],
+      "stopLossPct": 0.02,
+      "takeProfitPct": 0.04,
+      "riskPerTradePct": 0.01,
+      "logicExplanation": "Why this works"
+    }
+  ]
+}
+Return ONLY valid JSON. No preamble.`;
 
     try {
         const completion = await openai.chat.completions.create({

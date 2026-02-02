@@ -30,6 +30,7 @@ const App: React.FC = () => {
     const [liveMode, setLiveMode] = useState(false);
     const [showDeployModal, setShowDeployModal] = useState(false);
     const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'SAVED'>('DASHBOARD');
+    const [isManualMode, setIsManualMode] = useState(false);
 
     // Load Real Data
     const loadMarketData = async () => {
@@ -67,8 +68,10 @@ const App: React.FC = () => {
     // Handlers
     const handleUpdateStrategy = (newConfig: StrategyConfig) => {
         setStrategy(newConfig);
-        const btResult = runBacktest(newConfig, data);
-        setBacktest(btResult);
+        if (data.length > 0) {
+            const btResult = runBacktest(newConfig, data);
+            setBacktest(btResult);
+        }
     };
 
     const handleSaveStrategy = (config: StrategyConfig) => {
