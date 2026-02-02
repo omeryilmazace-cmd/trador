@@ -39,6 +39,10 @@ const ManualStrategyBuilder: React.FC<ManualStrategyBuilderProps> = ({ strategy,
         }
     };
 
+    const setSide = (side: 'LONG' | 'SHORT') => {
+        onChange({ ...strategy, side });
+    };
+
     const removeCondition = (type: 'entry' | 'exit', index: number) => {
         if (type === 'entry') {
             const newConds = [...strategy.entryConditions];
@@ -183,6 +187,28 @@ const ManualStrategyBuilder: React.FC<ManualStrategyBuilderProps> = ({ strategy,
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-700">
+            {/* Strategy Direction */}
+            <section className="bg-indigo-950/20 border border-indigo-500/10 p-4 rounded-2xl flex items-center justify-between">
+                <div>
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Trade Direction</h4>
+                    <p className="text-[10px] text-gray-500 italic">Should this strategy open Long or Short?</p>
+                </div>
+                <div className="flex bg-black/40 p-1 rounded-xl border border-gray-800">
+                    <button
+                        onClick={() => setSide('LONG')}
+                        className={`px-6 py-2 rounded-lg text-xs font-black transition-all ${strategy.side !== 'SHORT' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40' : 'text-gray-500 hover:text-gray-300'}`}
+                    >
+                        LONG
+                    </button>
+                    <button
+                        onClick={() => setSide('SHORT')}
+                        className={`px-6 py-2 rounded-lg text-xs font-black transition-all ${strategy.side === 'SHORT' ? 'bg-red-600 text-white shadow-lg shadow-red-900/40' : 'text-gray-500 hover:text-gray-300'}`}
+                    >
+                        SHORT
+                    </button>
+                </div>
+            </section>
+
             {/* Entry Conditions Section */}
             <section>
                 <div className="flex items-center justify-between mb-4">

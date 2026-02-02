@@ -151,10 +151,15 @@ export const runBacktest = (strategy: StrategyConfig, data: Candle[]): BacktestR
 
       if (shouldExit) {
         const exitPrice = candle.close;
-        // Fees: 0.05% taker fee simulation
-        const fee = (openTrade.entryPrice * 0.0005) + (exitPrice * 0.0005);
-        const rawPnl = (exitPrice - openTrade.entryPrice) * (openTrade.type === OrderType.BUY ? 1 : -1) * (equity / openTrade.entryPrice); // Full equity compounding
-        const realPnl = rawPnl - fee;
+        const fees = (openTrade.entryPrice * 0.0005) + (exitPrice * 0.0005);
+
+        // PnL Calculation based on LONG/SHORT
+        const isLong = openTrade.type === OrderType.BUY;
+        const rawPnl = isLong
+          ? (exitPrice - openTrade.entryPrice) * (equity / openTrade.entryPrice)
+          : (openTrade.entryPrice - exitPrice) * (equity / openTrade.entryPrice);
+
+        const realPnl = rawPnl - (equity * 0.001); // Simplified 0.1% total fee
 
         equity += realPnl;
         openTrade.exitPrice = exitPrice;
@@ -176,7 +181,7 @@ export const runBacktest = (strategy: StrategyConfig, data: Candle[]): BacktestR
         openTrade = {
           entryTime: candle.timestamp,
           entryPrice: candle.close,
-          type: OrderType.BUY, // Defaulting to Longs for MVP simplicity
+          type: strategy.side === 'SHORT' ? OrderType.SELL : OrderType.BUY,
           pnl: 0,
           pnlPct: 0,
           status: 'OPEN'

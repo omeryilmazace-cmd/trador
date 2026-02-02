@@ -40,6 +40,7 @@ export interface StrategyConfig {
   takeProfitPct: number;
   riskPerTradePct: number;
   riskParametersEnabled?: boolean; // Toggle for TP/SL
+  side: 'LONG' | 'SHORT'; // Strategy direction
   logicExplanation: string; // AI generated explanation
 }
 

@@ -66,11 +66,12 @@ const StrategyPanel: React.FC<StrategyPanelProps> = ({ strategy, backtest, isGen
 
     // Helper to initialize a default strategy for manual mode if none exists
     const ensureManualStrategy = () => {
-        if (strategy) return strategy;
+        if (strategy) return { ...strategy, side: strategy.side || 'LONG' };
         return {
             name: "New Manual Strategy",
             description: "Manually created strategy",
             timeframe: "1h" as any,
+            side: 'LONG' as const,
             entryConditions: [],
             exitConditions: [],
             stopLossPct: 0.02,
