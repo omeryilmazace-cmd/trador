@@ -298,6 +298,12 @@ const ManualStrategyBuilder: React.FC<ManualStrategyBuilderProps> = ({ strategy,
                             <div key={i} className="bg-[#1e293b] border border-gray-700/50 p-4 rounded-xl flex flex-col gap-3 group hover:border-indigo-500/40 transition-all">
                                 <div className="flex justify-between items-start">
                                     <div>
+                                        {res.category && (
+                                            <div className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                                                <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse" />
+                                                {res.category}
+                                            </div>
+                                        )}
                                         <div className="text-xs font-bold text-white mb-1">{res.config.name}</div>
                                         <div className="flex flex-wrap gap-1">
                                             {res.config.entryConditions.map((c, j) => (
